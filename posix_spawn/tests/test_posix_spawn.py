@@ -2,16 +2,12 @@ import os
 import sys
 import stat
 import tempfile
+import textwrap
+import platform
 
 from unittest import TestCase
 
 from posix_spawn import posix_spawn, FileActions
-
-
-scripts_dir = os.path.join(
-    os.path.dirname(__file__),
-    'scripts'
-)
 
 class PosixSpawnTests(TestCase):
     def test_returns_pid(self):
@@ -19,9 +15,11 @@ class PosixSpawnTests(TestCase):
             pid = posix_spawn(sys.executable, [
                 b'python',
                 b'-c',
-                (b'import os; '
-                 b'open({0!r}, "w").write(str(os.getpid()))'.format(
-                    pidfile.name))
+                textwrap.dedent("""
+                    import os
+                    with open({0!r}, "w") as pidfile:
+                        pidfile.write(str(os.getpid()))
+                """).format(pidfile.name)
             ])
 
             pid_info = os.waitpid(pid, 0)
@@ -46,14 +44,16 @@ class PosixSpawnTests(TestCase):
             pid = posix_spawn(sys.executable, [
                 b'python',
                 b'-c',
-                (b'import os; '
-                 b'open({0!r}, "w").write(str(os.environ))'.format(
-                    envfile.name))
-            ],
-            {b'foo': b'bar'})
+                textwrap.dedent("""
+                    import os
+                    with open({0!r}, "w") as envfile:
+                        envfile.write(os.environ['foo'])
+                """).format(envfile.name)],
+                {b"foo": b"bar"}
+            )
 
             os.waitpid(pid, 0)
-            self.assertIn(b"'foo': 'bar'", envfile.read())
+            self.assertEqual(b"bar", envfile.read())
 
     def test_environment_is_none_inherits_environment(self):
         with tempfile.NamedTemporaryFile(mode=b'r+b') as envfile:
@@ -62,15 +62,17 @@ class PosixSpawnTests(TestCase):
             pid = posix_spawn(sys.executable, [
                 b'python',
                 b'-c',
-                (b'import os; '
-                 b'open({0!r}, "w").write(str(os.environ))'.format(
-                    envfile.name))
-            ],
-            env=None)
+                textwrap.dedent("""
+                    import os
+                    with open({0!r}, "w") as envfile:
+                        envfile.write(os.environ['inherits'])
+                """).format(envfile.name)],
+                env=None
+            )
 
             os.waitpid(pid, 0)
 
-            self.assertIn(b"'inherits': 'environment'", envfile.read())
+            self.assertEqual(b"environment", envfile.read())
 
 
 class FileActionsTests(TestCase):
@@ -97,12 +99,15 @@ class FileActionsTests(TestCase):
             pid = posix_spawn(sys.executable, [
                 b'python',
                 b'-c',
-                b'print ("hello")',
-            ],
-            file_actions=fa)
+                textwrap.dedent("""
+                    import sys
+                    sys.stdout.write("hello")
+                """)],
+                file_actions=fa
+            )
 
             os.waitpid(pid, 0)
-            self.assertIn(b"hello", outfile.read())
+            self.assertEqual(b"hello", outfile.read())
 
     def test_close_file(self):
         with tempfile.NamedTemporaryFile(mode=b'r+b') as closefile:
@@ -111,14 +116,26 @@ class FileActionsTests(TestCase):
 
             pid = posix_spawn(sys.executable, [
                 b'python',
-                os.path.join(scripts_dir, 'check_close.py'),
-                closefile.name
-            ],
-            file_actions=fa)
+                b'-c',
+                textwrap.dedent("""
+                    import os
+                    import sys
+                    import errno
+
+                    try:
+                        os.fstat(0)
+                    except OSError as e:
+                        if e.errno == errno.EBADF:
+                            with open(sys.argv[1], 'w') as closefile:
+                                closefile.write('is closed')
+                """),
+                closefile.name],
+                file_actions=fa
+            )
 
             pid_info = os.waitpid(pid, 0)
             self.assertEqual(pid_info[1], 0)
-            self.assertIn(b"is closed", closefile.read())
+            self.assertEqual(b"is closed", closefile.read())
 
     def test_dup2(self):
         with tempfile.NamedTemporaryFile(mode=b'w+b') as dupfile:
@@ -126,11 +143,16 @@ class FileActionsTests(TestCase):
             self.assertEqual(0, fa.add_dup2(dupfile.fileno(), 1))
 
             pid = posix_spawn(sys.executable, [
-                b'python', '-c', 'import sys; sys.stdout.write("hello")'
-            ], file_actions=fa)
+                b'python', '-c',
+                textwrap.dedent("""
+                    import sys
+                    sys.stdout.write("hello")
+                """)],
+                file_actions=fa
+            )
 
             pid_info = os.waitpid(pid, 0)
             self.assertEqual(pid_info[1], 0)
 
             with open(dupfile.name, b'r+b') as stdout:
-                self.assertIn("hello", stdout.read())
+                self.assertEqual("hello", stdout.read())
