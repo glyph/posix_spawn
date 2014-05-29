@@ -27,6 +27,8 @@ class TestPosixSpawn(object):
         assert pid_info[1] == 0
         assert pid == int(pidfile.read())
 
+    @pytest.mark.skipif(sys.platform.startswith("linux"),
+                        reason="Is this even...")
     def test_raises_on_error(self):
         with pytest.raises(OSError) as error:
             posix_spawn(b'no_such_executable', [b'no_such_executable'])
