@@ -25,7 +25,7 @@ class FileActions(object):
         return lib.posix_spawn_file_actions_addclose(self._actions_t, fd)
 
     def add_dup2(self, fd, new_fd):
-        return lib.posix_spawn_file_actions_dup2(self._actions_t, fd, new_fd)
+        return lib.posix_spawn_file_actions_adddup2(self._actions_t, fd, new_fd)
 
 
 def posix_spawn(path, args, env=None, file_actions=None, attributes=None):

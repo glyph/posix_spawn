@@ -104,3 +104,18 @@ class PosixSpawnTests(TestCase):
             pid_info = os.waitpid(pid, 0)
             self.assertEqual(pid_info[1], 0)
             self.assertIn(b"is closed", closefile.read())
+
+    def test_dup2(self):
+        with tempfile.NamedTemporaryFile(mode=b'w+b') as dupfile:
+            fa = FileActions()
+            self.assertEqual(0, fa.add_dup2(dupfile.fileno(), 1))
+
+            pid = posix_spawn(sys.executable, [
+                b'python', '-c', 'import sys; sys.stdout.write("hello")'
+            ], file_actions=fa)
+
+            pid_info = os.waitpid(pid, 0)
+            self.assertEqual(pid_info[1], 0)
+
+            with open(dupfile.name, b'r+b') as stdout:
+                self.assertIn("hello", stdout.read())
