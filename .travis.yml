@@ -9,5 +9,6 @@ python:
 
 install:
   - pip install -r requirements.txt
+  - pip install pytest
 script:
-  - python -m unittest posix_spawn.tests.test_posix_spawn
+  - py.test posix_spawn
