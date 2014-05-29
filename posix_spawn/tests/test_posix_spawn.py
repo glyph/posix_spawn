@@ -8,6 +8,11 @@ from unittest import TestCase
 from posix_spawn import posix_spawn, FileActions
 
 
+scripts_dir = os.path.join(
+    os.path.dirname(__file__),
+    'scripts'
+)
+
 class PosixSpawnTests(TestCase):
     def test_returns_pid(self):
         with tempfile.NamedTemporaryFile(mode=b'r+b') as pidfile:
@@ -87,16 +92,15 @@ class PosixSpawnTests(TestCase):
     def test_close_file(self):
         with tempfile.NamedTemporaryFile(mode=b'r+b') as closefile:
             fa = FileActions()
-            self.assertEqual(0, fa.add_close(1))
+            self.assertEqual(0, fa.add_close(0))
 
             pid = posix_spawn(sys.executable, [
                 b'python',
-                b'-c',
-                (b'import sys; '
-                 b'open({0!r}, "w").write(str(sys.stdout.closed))'.format(
-                    closefile.name))
+                os.path.join(scripts_dir, 'check_close.py'),
+                closefile.name
             ],
             file_actions=fa)
 
-            os.waitpid(pid, 0)
-            self.assertIn(b"True", closefile.read())
+            pid_info = os.waitpid(pid, 0)
+            self.assertEqual(pid_info[1], 0)
+            self.assertIn(b"is closed", closefile.read())
