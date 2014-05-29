@@ -38,6 +38,9 @@ class PosixSpawnTests(TestCase):
         self.assertEqual(error.exception.strerror, 'No such file or directory')
         self.assertEqual(error.exception.filename, b'no_such_executable')
 
+    if platform.system() == "Linux":
+        test_raises_on_error.skip = "I can't even."
+
     def test_specify_environment(self):
         with tempfile.NamedTemporaryFile(mode=b'r+b') as envfile:
             pid = posix_spawn(sys.executable, [
