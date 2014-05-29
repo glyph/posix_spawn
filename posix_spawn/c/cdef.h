@@ -1,8 +1,8 @@
-typedef void *posix_spawnattr_t;
-typedef void *posix_spawn_file_actions_t;
+typedef ... *posix_spawnattr_t;
+typedef ... *posix_spawn_file_actions_t;
 typedef int pid_t;
 typedef unsigned int mode_t;
-typedef unsigned int sigset_t;
+typedef ... sigset_t;
 
 int posix_spawn(pid_t *, const char *,
         const posix_spawn_file_actions_t *,
