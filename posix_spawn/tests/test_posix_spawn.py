@@ -3,7 +3,6 @@ import sys
 import stat
 import tempfile
 import textwrap
-import platform
 
 from unittest import TestCase
 
@@ -29,15 +28,15 @@ class PosixSpawnTests(TestCase):
             self.assertEqual(pid, int(pidfile.read()))
 
     def test_raises_on_error(self):
+        if sys.platform.startswith('linux'):
+            self.skipTest("I don't even.")
+
         with self.assertRaises(OSError) as error:
             posix_spawn(b'no_such_executable', [b'no_such_executable'])
 
         self.assertEqual(error.exception.errno, 2)
         self.assertEqual(error.exception.strerror, 'No such file or directory')
         self.assertEqual(error.exception.filename, b'no_such_executable')
-
-    if platform.system() == "Linux":
-        test_raises_on_error.skip = "I can't even."
 
     def test_specify_environment(self):
         with tempfile.NamedTemporaryFile(mode=b'r+b') as envfile:
