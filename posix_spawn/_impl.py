@@ -39,6 +39,7 @@ def posix_spawn(path, args, env=None, file_actions=None, attributes=None):
     else:
         file_actions = file_actions._actions_t
 
+    ffi.errno = 0
     res = lib.posix_spawn(
         pid,
         path,
@@ -51,5 +52,8 @@ def posix_spawn(path, args, env=None, file_actions=None, attributes=None):
 
     if res != 0:
         raise OSError(res, os.strerror(res), path)
+
+    if ffi.errno != 0:
+        raise OSError(ffi.errno, os.strerror(ffi.errno), path)
 
     return pid[0]
