@@ -69,6 +69,18 @@ class PosixSpawnTests(TestCase):
 
             self.assertIn(b"'inherits': 'environment'", envfile.read())
 
+
+class FileActionsTests(TestCase):
+    def test_empty_actions(self):
+        fa = FileActions()
+        pid = posix_spawn(
+            sys.executable,
+            [b'python', '-c', 'pass'],
+            file_actions=fa
+        )
+        pid_info = os.waitpid(pid, 0)
+        self.assertEqual(0, pid_info[1])
+
     def test_open_file(self):
         with tempfile.NamedTemporaryFile(mode=b'r+b') as outfile:
             fa = FileActions()

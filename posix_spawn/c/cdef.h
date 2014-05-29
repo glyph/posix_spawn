@@ -1,5 +1,5 @@
-typedef ... *posix_spawnattr_t;
-typedef ... *posix_spawn_file_actions_t;
+typedef struct { ...; } posix_spawnattr_t;
+typedef struct { ...; } posix_spawn_file_actions_t;
 typedef int pid_t;
 typedef unsigned int mode_t;
 typedef ... sigset_t;
