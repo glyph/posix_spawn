@@ -7,5 +7,7 @@ python:
   - "3.4"
   - "pypy"
 
-install: pip install twisted
-script: trial posix_spawn/
+install:
+  - pip install -r requirements.txt
+script:
+  - python -m unittest posix_spawn.tests.test_posix_spawn
