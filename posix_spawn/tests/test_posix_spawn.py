@@ -4,7 +4,7 @@ import stat
 import tempfile
 import textwrap
 
-from unittest import TestCase
+from unittest2 import TestCase, skipIf
 
 from posix_spawn import posix_spawn, FileActions
 
@@ -27,10 +27,8 @@ class PosixSpawnTests(TestCase):
             self.assertEqual(pid_info[1], 0)
             self.assertEqual(pid, int(pidfile.read()))
 
+    @skipIf(sys.platform.startswith('linux'), 'Seriously.')
     def test_raises_on_error(self):
-        if sys.platform.startswith('linux'):
-            self.skipTest("I don't even.")
-
         with self.assertRaises(OSError) as error:
             posix_spawn(b'no_such_executable', [b'no_such_executable'])
 
