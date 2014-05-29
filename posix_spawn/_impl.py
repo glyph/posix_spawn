@@ -29,6 +29,7 @@ class FileActions(object):
 
 
 def posix_spawn(path, args, env=None, file_actions=None, attributes=None):
+    print args
     pid = ffi.new("pid_t *")
 
     if env is None:
