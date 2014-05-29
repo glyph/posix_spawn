@@ -46,7 +46,7 @@ def posix_spawn(path, args, env=None, file_actions=None, attributes=None):
         ffi.NULL,
         [ffi.new("char[]", arg) for arg in args],
         [ffi.new("char[]", b'{0}={1}'.format(key, value))
-         for key, value in env.iteritems()]
+         for key, value in env.items()]
     )
 
     if res != 0:
