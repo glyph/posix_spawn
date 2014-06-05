@@ -8,17 +8,20 @@ import pytest
 
 from posix_spawn import posix_spawn, FileActions
 
+executable = sys.executable.encode('ascii')
+environ = getattr(os, 'environb', os.environ)
+
 class TestPosixSpawn(object):
     def test_returns_pid(self, tmpdir):
         pidfile = tmpdir.join('pidfile')
-        pid = posix_spawn(sys.executable, [
+        pid = posix_spawn(executable, [
             b'python',
             b'-c',
             textwrap.dedent("""
                 import os
                 with open("{0!s}", "w") as pidfile:
                     pidfile.write(str(os.getpid()))
-            """).format(pidfile)
+            """).format(pidfile).encode('ascii')
         ])
 
         pid_info = os.waitpid(pid, 0)
@@ -39,46 +42,46 @@ class TestPosixSpawn(object):
 
     def test_specify_environment(self, tmpdir):
         envfile = tmpdir.join("envfile")
-        pid = posix_spawn(sys.executable, [
+        pid = posix_spawn(executable, [
             b'python',
             b'-c',
             textwrap.dedent("""
                 import os
                 with open("{0!s}", "w") as envfile:
                     envfile.write(os.environ['foo'])
-            """).format(envfile)],
+            """).format(envfile).encode('ascii')],
             {b"foo": b"bar"}
         )
 
         os.waitpid(pid, 0)
-        assert b"bar" == envfile.read()
+        assert "bar" == envfile.read()
 
     def test_environment_is_none_inherits_environment(self, tmpdir):
         envfile = tmpdir.join("envfile")
-        os.environ[b'inherits'] = 'environment'
+        environ[b'inherits'] = b'environment'
 
-        pid = posix_spawn(sys.executable, [
+        pid = posix_spawn(executable, [
             b'python',
             b'-c',
             textwrap.dedent("""
                 import os
                 with open("{0!s}", "w") as envfile:
                     envfile.write(os.environ['inherits'])
-            """).format(envfile)],
+            """).format(envfile).encode('ascii')],
             env=None
         )
 
         os.waitpid(pid, 0)
 
-        assert b"environment" == envfile.read()
+        assert "environment" == envfile.read()
 
 
 class TestFileActions(object):
     def test_empty_actions(self):
         fa = FileActions()
         pid = posix_spawn(
-            sys.executable,
-            [b'python', '-c', 'pass'],
+            executable,
+            [b'python', b'-c', b'pass'],
             file_actions=fa
         )
         pid_info = os.waitpid(pid, 0)
@@ -89,30 +92,30 @@ class TestFileActions(object):
         fa = FileActions()
         assert 0 == fa.add_open(
             1,
-            str(outfile),
+            str(outfile).encode('ascii'),
             os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
             stat.S_IRUSR | stat.S_IWUSR
         )
 
-        pid = posix_spawn(sys.executable, [
+        pid = posix_spawn(executable, [
             b'python',
             b'-c',
             textwrap.dedent("""
                 import sys
                 sys.stdout.write("hello")
-            """)],
+            """).encode('ascii')],
             file_actions=fa
         )
 
         os.waitpid(pid, 0)
-        assert b"hello" == outfile.read()
+        assert "hello" == outfile.read()
 
     def test_close_file(self, tmpdir):
         closefile = tmpdir.join("closefile")
         fa = FileActions()
         assert 0 == fa.add_close(0)
 
-        pid = posix_spawn(sys.executable, [
+        pid = posix_spawn(executable, [
             b'python',
             b'-c',
             textwrap.dedent("""
@@ -126,14 +129,14 @@ class TestFileActions(object):
                     if e.errno == errno.EBADF:
                         with open(sys.argv[1], 'w') as closefile:
                             closefile.write('is closed')
-            """),
-            str(closefile)],
+            """).encode('ascii'),
+            str(closefile).encode('ascii')],
             file_actions=fa
         )
 
         pid_info = os.waitpid(pid, 0)
         assert pid_info[1] == 0
-        assert b"is closed" == closefile.read()
+        assert "is closed" == closefile.read()
 
     def test_dup2(self, tmpdir):
         dupfile = tmpdir.join("dupfile")
@@ -141,12 +144,13 @@ class TestFileActions(object):
             fa = FileActions()
             assert 0 == fa.add_dup2(childfile.fileno(), 1)
 
-            pid = posix_spawn(sys.executable, [
-                b'python', '-c',
+            pid = posix_spawn(executable, [
+                b'python',
+                b'-c',
                 textwrap.dedent("""
                     import sys
                     sys.stdout.write("hello")
-                """)],
+                """).encode('ascii')],
                 file_actions=fa
             )
 
