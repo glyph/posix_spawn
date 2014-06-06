@@ -13,7 +13,7 @@ environ = getattr(os, 'environb', os.environ)
 
 def exits(pid):
     (_pid, exit, _rusage) = os.wait4(pid, 0)
-    return exit
+    return os.WEXITSTATUS(exit)
 
 
 class TestPosixSpawn(object):
