@@ -11,6 +11,11 @@ from posix_spawn import posix_spawn, FileActions
 executable = sys.executable.encode('ascii')
 environ = getattr(os, 'environb', os.environ)
 
+def exits(pid):
+    (_pid, exit, _rusage) = os.wait4(pid, 0)
+    return exit
+
+
 class TestPosixSpawn(object):
     def test_returns_pid(self, tmpdir):
         pidfile = tmpdir.join('pidfile')
@@ -24,9 +29,7 @@ class TestPosixSpawn(object):
             """).format(pidfile).encode('ascii')
         ])
 
-        pid_info = os.waitpid(pid, 0)
-        assert pid == pid_info[0]
-        assert pid_info[1] == 0
+        assert exits(pid) == 0
         assert pid == int(pidfile.read())
 
     @pytest.mark.skipif(sys.platform.startswith("linux"),
@@ -52,9 +55,7 @@ class TestPosixSpawn(object):
             {b"foo": b"bar"}
         )
 
-        pid_info = os.waitpid(pid, 0)
-        assert pid == pid_info[0]
-        assert pid_info[1] == 0
+        assert exits(pid) == 0
         assert "bar" == envfile.read()
 
     def test_environment_is_none_inherits_environment(self, tmpdir):
@@ -72,9 +73,7 @@ class TestPosixSpawn(object):
             env=None
         )
 
-        pid_info = os.waitpid(pid, 0)
-        assert pid == pid_info[0]
-        assert pid_info[1] == 0
+        assert exits(pid) == 0
         assert "environment" == envfile.read()
 
 
@@ -86,8 +85,7 @@ class TestFileActions(object):
             [executable, b'-c', b'pass'],
             file_actions=fa
         )
-        pid_info = os.waitpid(pid, 0)
-        assert 0 == pid_info[1]
+        assert exits(pid) == 0
 
     def test_open_file(self, tmpdir):
         outfile = tmpdir.join('outfile')
@@ -109,9 +107,7 @@ class TestFileActions(object):
             file_actions=fa
         )
 
-        pid_info = os.waitpid(pid, 0)
-        assert pid == pid_info[0]
-        assert pid_info[1] == 0
+        assert exits(pid) == 0
         assert "hello" == outfile.read()
 
     def test_close_file(self, tmpdir):
@@ -138,8 +134,7 @@ class TestFileActions(object):
             file_actions=fa
         )
 
-        pid_info = os.waitpid(pid, 0)
-        assert pid_info[1] == 0
+        assert exits(pid) == 0
         assert "is closed" == closefile.read()
 
     def test_dup2(self, tmpdir):
@@ -158,7 +153,6 @@ class TestFileActions(object):
                 file_actions=fa
             )
 
-            pid_info = os.waitpid(pid, 0)
-            assert pid_info[1] == 0
+            assert exits(pid) == 0
 
         assert "hello" == dupfile.read()
