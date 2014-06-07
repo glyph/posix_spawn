@@ -18,7 +18,9 @@ class FileActions(object):
         )
         self._keepalive = []
 
-        lib.posix_spawn_file_actions_init(self._actions_t)
+        res = lib.posix_spawn_file_actions_init(self._actions_t)
+        if res != 0:
+            _handle_error(res)
 
     def add_open(self, fd, path, oflag, mode):
         if not isinstance(fd, int):
@@ -54,7 +56,9 @@ class FileActions(object):
             raise TypeError(
                 "fd must be an int not {0}.".format(type(fd).__name__))
 
-        return lib.posix_spawn_file_actions_addclose(self._actions_t, fd)
+        res = lib.posix_spawn_file_actions_addclose(self._actions_t, fd)
+        if res != 0:
+            _handle_error(res)
 
     def add_dup2(self, fd, new_fd):
         if not isinstance(fd, int):
@@ -65,8 +69,10 @@ class FileActions(object):
             raise TypeError(
                 "new_fd must be an int not {0}.".format(type(new_fd).__name__))
 
-        return lib.posix_spawn_file_actions_adddup2(
+        res =  lib.posix_spawn_file_actions_adddup2(
             self._actions_t, fd, new_fd)
+        if res != 0:
+            _handle_error(res)
 
 
 def posix_spawn(path, args, env=None, file_actions=None, attributes=None):
