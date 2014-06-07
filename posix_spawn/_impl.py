@@ -3,6 +3,13 @@ import os
 from ._lib import lib, ffi
 
 
+def _handle_error(errno, path=None):
+    if path is not None:
+        raise OSError(errno, os.strerror(errno), path)
+    else:
+        raise OSError(errno, os.sterror(errno))
+
+
 class FileActions(object):
     def __init__(self):
         self._actions_t = ffi.gc(
@@ -29,13 +36,15 @@ class FileActions(object):
             raise TypeError(
                 "mode must be int not {0}.".format(type(mode).__name__))
 
-        return lib.posix_spawn_file_actions_addopen(
+        res = lib.posix_spawn_file_actions_addopen(
             self._actions_t,
             fd,
             path,
             oflag,
             mode
         )
+        if res != 0:
+            _handle_error(res)
 
     def add_close(self, fd):
         if not isinstance(fd, int):
@@ -92,6 +101,6 @@ def posix_spawn(path, args, env=None, file_actions=None, attributes=None):
     )
 
     if res != 0:
-        raise OSError(res, os.strerror(res), path)
+        _handle_error(res)
 
     return pid[0]
