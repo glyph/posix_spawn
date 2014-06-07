@@ -9,6 +9,7 @@ class FileActions(object):
             ffi.new("posix_spawn_file_actions_t *"),
             lib.posix_spawn_file_actions_destroy
         )
+        self._keepalive = []
 
         lib.posix_spawn_file_actions_init(self._actions_t)
 
@@ -29,10 +30,12 @@ class FileActions(object):
             raise TypeError(
                 "mode must be int not {0}.".format(type(mode).__name__))
 
+        path_p = ffi.new("char[]", path)
+        self._keepalive.append(path_p)
         return lib.posix_spawn_file_actions_addopen(
             self._actions_t,
             fd,
-            path,
+            path_p,
             oflag,
             mode
         )
