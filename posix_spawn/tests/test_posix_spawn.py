@@ -90,7 +90,7 @@ class TestFileActions(object):
     def test_open_file(self, tmpdir):
         outfile = tmpdir.join('outfile')
         fa = FileActions()
-        assert 0 == fa.add_open(
+        fa.add_open(
             1,
             str(outfile).encode('ascii'),
             os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
