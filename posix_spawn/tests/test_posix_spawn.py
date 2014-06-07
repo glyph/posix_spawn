@@ -113,7 +113,7 @@ class TestFileActions(object):
     def test_close_file(self, tmpdir):
         closefile = tmpdir.join("closefile")
         fa = FileActions()
-        assert 0 == fa.add_close(0)
+        fa.add_close(0)
 
         pid = posix_spawn(executable, [
             executable,
@@ -141,7 +141,7 @@ class TestFileActions(object):
         dupfile = tmpdir.join("dupfile")
         with dupfile.open("w") as childfile:
             fa = FileActions()
-            assert 0 == fa.add_dup2(childfile.fileno(), 1)
+            fa.add_dup2(childfile.fileno(), 1)
 
             pid = posix_spawn(executable, [
                 executable,
