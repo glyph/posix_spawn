@@ -3,11 +3,12 @@ import os
 from ._lib import lib, ffi
 
 
-def _handle_error(errno, path=None):
-    if path is not None:
-        raise OSError(errno, os.strerror(errno), path)
-    else:
-        raise OSError(errno, os.sterror(errno))
+def _check_error(errno, path=None):
+    if errno != 0:
+        if path is not None:
+            raise OSError(errno, os.strerror(errno), path)
+        else:
+            raise OSError(errno, os.sterror(errno))
 
 
 class FileActions(object):
@@ -19,8 +20,7 @@ class FileActions(object):
         self._keepalive = []
 
         res = lib.posix_spawn_file_actions_init(self._actions_t)
-        if res != 0:
-            _handle_error(res)
+        _check_error(res)
 
     def add_open(self, fd, path, oflag, mode):
         if not isinstance(fd, int):
@@ -48,8 +48,7 @@ class FileActions(object):
             oflag,
             mode
         )
-        if res != 0:
-            _handle_error(res)
+        _check_error(res)
 
     def add_close(self, fd):
         if not isinstance(fd, int):
@@ -57,8 +56,7 @@ class FileActions(object):
                 "fd must be an int not {0}.".format(type(fd).__name__))
 
         res = lib.posix_spawn_file_actions_addclose(self._actions_t, fd)
-        if res != 0:
-            _handle_error(res)
+        _check_error(res)
 
     def add_dup2(self, fd, new_fd):
         if not isinstance(fd, int):
@@ -71,8 +69,7 @@ class FileActions(object):
 
         res =  lib.posix_spawn_file_actions_adddup2(
             self._actions_t, fd, new_fd)
-        if res != 0:
-            _handle_error(res)
+        _check_error(res)
 
 
 def posix_spawn(path, args, env=None, file_actions=None, attributes=None):
@@ -108,8 +105,6 @@ def posix_spawn(path, args, env=None, file_actions=None, attributes=None):
         arg_list,
         env_list
     )
-
-    if res != 0:
-        _handle_error(res)
+    _check_error(res, path)
 
     return pid[0]
