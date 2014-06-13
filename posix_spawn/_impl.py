@@ -8,7 +8,7 @@ def _check_error(errno, path=None):
         if path is not None:
             raise OSError(errno, os.strerror(errno), path)
         else:
-            raise OSError(errno, os.sterror(errno))
+            raise OSError(errno, os.strerror(errno))
 
 
 class FileActions(object):
