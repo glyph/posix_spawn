@@ -14,6 +14,9 @@ setup(
     include_package_data=True,
 
     install_requires=["cffi>=1.0.0"],
+    extras_require={
+        "dev": ["pytest"],
+    },
 
     zip_safe=False,
 )
