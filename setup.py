@@ -6,8 +6,14 @@ setup(
     description="CFFI bindings to posix_spawn.",
     license="MIT",
 
-    packages=find_packages(),
+    setup_requires=["cffi>=1.0.0"],
+    cffi_modules=["src/_cffi_src/_build.py:maker"],
+
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
+    include_package_data=True,
+
+    install_requires=["cffi>=1.0.0"],
 
     zip_safe=False,
-    ext_packages="posix_spawn"
 )
