@@ -1,6 +1,6 @@
 import os
 
-from ._lib import lib, ffi
+from ._bindings import lib, ffi
 
 
 def _check_error(errno, path=None):
